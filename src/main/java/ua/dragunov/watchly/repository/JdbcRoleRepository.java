@@ -1,6 +1,5 @@
 package ua.dragunov.watchly.repository;
 
-import org.flywaydb.core.internal.jdbc.JdbcTemplate;
 import ua.dragunov.watchly.exceptions.DataAccessException;
 import ua.dragunov.watchly.model.entity.Role;
 import ua.dragunov.watchly.repository.api.RoleRepository;
@@ -15,8 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class JdbcRoleRepository implements RoleRepository {
-
-    private DataSource dataSource;
+    private final DataSource dataSource;
 
     public JdbcRoleRepository(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -65,6 +63,26 @@ public class JdbcRoleRepository implements RoleRepository {
     }
 
     @Override
+    public List<Role> findAllByUserId(long userId) {
+        List<Role> roles = new ArrayList<>();
+
+        try(Connection connection = dataSource.getConnection();
+            PreparedStatement selectStatement = connection.prepareStatement(RoleSqlQueries.SQL_FIND_ALL_BY_USER_ID)) {
+
+            selectStatement.setLong(1, userId);
+            try (ResultSet resultSet = selectStatement.executeQuery()) {
+                while (resultSet.next()) {
+                    roles.add(mapRowToRole(resultSet));
+                }
+            }
+
+            return roles;
+        } catch (SQLException e) {
+            throw new DataAccessException("Error finding roles by user ID " + userId, e);
+        }
+    }
+
+    @Override
     public List<Role> findAll() {
         try(Connection connection = dataSource.getConnection();
             PreparedStatement statement = connection.prepareStatement(RoleSqlQueries.SQL_FIND_ALL);
@@ -84,37 +102,38 @@ public class JdbcRoleRepository implements RoleRepository {
     }
 
     @Override
-    public void insert(Role role) {
-        try(Connection connection = dataSource.getConnection();
-            PreparedStatement insert = connection.prepareStatement(RoleSqlQueries.SQL_INSERT)) {
+    public Role save(Role role) {
+        if (role.getId() == null) {
+            try(Connection connection = dataSource.getConnection();
+                PreparedStatement insert = connection.prepareStatement(RoleSqlQueries.SQL_INSERT)) {
 
-            insert.setString(1, role.getName());
-            int affectedRows = insert.executeUpdate();
+                insert.setString(1, role.getName());
+                int affectedRows = insert.executeUpdate();
 
-            if (affectedRows == 0) {
-                throw new DataAccessException("Error inserting new role " + role.getName());
+                if (affectedRows == 0) {
+                    throw new DataAccessException("Error inserting new role " + role.getName());
+                }
+
+            } catch (SQLException e) {
+                throw new DataAccessException(String.format("Error inserting role %s", role.getName()), e);
             }
+        } else {
+            try(Connection connection = dataSource.getConnection();
+                PreparedStatement update = connection.prepareStatement(RoleSqlQueries.SQL_UPDATE)) {
 
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Error inserting role %s", role.getName()), e);
-        }
-    }
+                update.setString(1, role.getName());
+                int affectedRows = update.executeUpdate();
 
-    @Override
-    public void update(Role role) {
-        try(Connection connection = dataSource.getConnection();
-            PreparedStatement update = connection.prepareStatement(RoleSqlQueries.SQL_UPDATE)) {
+                if (affectedRows == 0) {
+                    throw new DataAccessException("Error inserting new role " + role.getName());
+                }
 
-            update.setString(1, role.getName());
-            int affectedRows = update.executeUpdate();
-
-            if (affectedRows == 0) {
-                throw new DataAccessException("Error inserting new role " + role.getName());
+            } catch (SQLException e) {
+                throw new DataAccessException(String.format("Error inserting role %s", role.getName()), e);
             }
-
-        } catch (SQLException e) {
-            throw new DataAccessException(String.format("Error inserting role %s", role.getName()), e);
         }
+
+        return role;
     }
 
     @Override
@@ -149,6 +168,8 @@ public class JdbcRoleRepository implements RoleRepository {
         private static final String TABLE_NAME = "roles";
         private static final String COLUMN_ID = "id";
         private static final String COLUMN_NAME = "name";
+        private static final String COLUMN_USER_ID = "user_id";
+        private static final String TABLE_USER_ROLES = "user_roles";
 
         private static final String SQL_FIND_BY_ID = "SELECT " + COLUMN_ID + ", " + COLUMN_NAME + " FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = ?";
         private static final String SQL_FIND_BY_NAME = "SELECT " + COLUMN_ID + ", " + COLUMN_NAME + " FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME + " = ?";
@@ -156,5 +177,11 @@ public class JdbcRoleRepository implements RoleRepository {
         private static final String SQL_INSERT = "INSERT INTO " + TABLE_NAME + " (" + COLUMN_NAME + ") VALUES (?)";
         private static final String SQL_UPDATE = "UPDATE " + TABLE_NAME + " SET " + COLUMN_NAME + " = ? WHERE " + COLUMN_ID + " = ?";
         private static final String SQL_DELETE_BY_ID = "DELETE FROM " + TABLE_NAME + " WHERE " + COLUMN_ID + " = ?";
+
+        private static final String SQL_FIND_ALL_BY_USER_ID = String.format("""
+                SELECT r.%s, r.%s FROM %s r
+                INNER JOIN %s ur ON r.%s = ur.%s
+                WHERE ur.%s = ?
+                """,COLUMN_ID, COLUMN_NAME, TABLE_NAME, TABLE_USER_ROLES, COLUMN_ID, COLUMN_USER_ID, COLUMN_ID);
     }
 }

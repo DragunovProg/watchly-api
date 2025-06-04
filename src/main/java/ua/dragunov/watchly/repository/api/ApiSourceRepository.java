@@ -1,5 +1,6 @@
 package ua.dragunov.watchly.repository.api;
 
+import ua.dragunov.watchly.model.entity.Actor;
 import ua.dragunov.watchly.model.entity.ApiSource;
 
 import java.util.List;
@@ -13,4 +14,5 @@ public interface ApiSourceRepository {
     List<ApiSource> findAll();
 
     ApiSource save(ApiSource apiSource);
+
 }

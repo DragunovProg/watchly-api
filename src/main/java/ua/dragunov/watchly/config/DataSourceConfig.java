@@ -36,7 +36,10 @@ public class DataSourceConfig {
                         HikariConfig hikariConfig = new HikariConfig();
 
                         String timezone = getPropertyOrThrow(properties, "timezone");
-                        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(timezone));
+                        if (timezone != null) {
+                            java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone(timezone));
+                        }
+
                         logger.debug("⏱ Timezone set to {}", timezone);
 
 

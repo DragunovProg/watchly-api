@@ -54,7 +54,6 @@ public class JdbcActorRepository implements ActorRepository {
     @Override
     public Actor save(Actor actor) {
         if (actor.getId() == null) {
-            // INSERT
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement ps = conn.prepareStatement(ActorSqlQueries.SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
 
@@ -73,9 +72,7 @@ public class JdbcActorRepository implements ActorRepository {
             } catch (SQLException e) {
                 throw new DataAccessException("Error inserting actor", e);
             }
-
         } else {
-            // UPDATE
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement ps = conn.prepareStatement(ActorSqlQueries.SQL_UPDATE)) {
 
@@ -95,18 +92,7 @@ public class JdbcActorRepository implements ActorRepository {
 
     @Override
     public void deleteById(long id) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement ps = conn.prepareStatement(ActorSqlQueries.SQL_DELETE_BY_ID)) {
 
-            ps.setLong(1, id);
-            int affected = ps.executeUpdate();
-            if (affected == 0) {
-                throw new DataAccessException("Deleting actor failed, no rows affected.");
-            }
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Error deleting actor by ID: " + id, e);
-        }
     }
 
     @Override

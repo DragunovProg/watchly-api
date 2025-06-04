@@ -57,36 +57,36 @@ public class JdbcMediaItemRepository implements MediaItemRepository {
 
     @Override
     public MediaItem save(MediaItem item) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(MediaItemSqlQueries.SQL_INSERT)) {
+        if (item.getId() == null) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(MediaItemSqlQueries.SQL_INSERT)) {
 
-            fillStatementProperties(item, stmt);
+                fillStatementProperties(item, stmt);
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    item.setId(rs.getLong(MediaItemSqlQueries.COLUMN_ID));
-                    Timestamp ts = rs.getTimestamp(MediaItemSqlQueries.COLUMN_CREATED_AT);
-                    if (ts != null) {
-                        item.setCreatedAt(ts.toInstant().atZone(ZoneId.systemDefault()));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        item.setId(rs.getLong(MediaItemSqlQueries.COLUMN_ID));
+                        Timestamp ts = rs.getTimestamp(MediaItemSqlQueries.COLUMN_CREATED_AT);
+                        if (ts != null) {
+                            item.setCreatedAt(ts.toInstant().atZone(ZoneId.systemDefault()));
+                        }
                     }
                 }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error saving MediaItem", e);
             }
-        } catch (SQLException e) {
-            throw new DataAccessException("Error saving MediaItem", e);
+        } else {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(MediaItemSqlQueries.SQL_UPDATE)) {
+                fillStatementProperties(item, stmt);
+                stmt.setLong(7, item.getId());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error updating MediaItem with id: " + item.getId(), e);
+            }
         }
-        return item;
-    }
 
-    @Override
-    public void update(MediaItem item) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(MediaItemSqlQueries.SQL_UPDATE)) {
-            fillStatementProperties(item, stmt);
-            stmt.setLong(7, item.getId());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException("Error updating MediaItem with id: " + item.getId(), e);
-        }
+        return item;
     }
 
 

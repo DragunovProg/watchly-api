@@ -17,23 +17,39 @@ public class JdbcUserRepository implements UserRepository {
     }
 
     @Override
-    public void save(User user) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(UserSqlQueries.SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getAvatarUrl());
-            stmt.executeUpdate();
+    public User save(User user) {
+        if (user.getId() == null) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(UserSqlQueries.SQL_INSERT, Statement.RETURN_GENERATED_KEYS)) {
+                stmt.setString(1, user.getUsername());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getPasswordHash());
+                stmt.setString(4, user.getAvatarUrl());
+                stmt.executeUpdate();
 
-            try (ResultSet rs = stmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    user.setId(rs.getLong(1));
+                try (ResultSet rs = stmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        user.setId(rs.getLong(1));
+                    }
                 }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error saving user", e);
             }
-        } catch (SQLException e) {
-            throw new DataAccessException("Error saving user", e);
+        } else {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(UserSqlQueries.SQL_UPDATE)) {
+                stmt.setString(1, user.getUsername());
+                stmt.setString(2, user.getEmail());
+                stmt.setString(3, user.getPasswordHash());
+                stmt.setString(4, user.getAvatarUrl());
+                stmt.setLong(5, user.getId());
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new DataAccessException("Error updating user with id: " + user.getId(), e);
+            }
         }
+
+        return user;
     }
 
     @Override
@@ -49,21 +65,6 @@ public class JdbcUserRepository implements UserRepository {
     @Override
     public User findByEmail(String email) {
         return findOneBy(UserSqlQueries.SQL_FIND_BY_EMAIL, email).orElse(null);
-    }
-
-    @Override
-    public void update(User user) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(UserSqlQueries.SQL_UPDATE)) {
-            stmt.setString(1, user.getUsername());
-            stmt.setString(2, user.getEmail());
-            stmt.setString(3, user.getPasswordHash());
-            stmt.setString(4, user.getAvatarUrl());
-            stmt.setLong(5, user.getId());
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            throw new DataAccessException("Error updating user with id: " + user.getId(), e);
-        }
     }
 
     @Override

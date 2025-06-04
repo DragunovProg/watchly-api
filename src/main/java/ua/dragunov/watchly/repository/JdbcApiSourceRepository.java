@@ -72,15 +72,15 @@ public class JdbcApiSourceRepository implements ApiSourceRepository {
     }
 
     @Override
-    public ApiSource save(ApiSource source) {
-        if (source.getId() == null) {
+    public ApiSource save(ApiSource apiSource) {
+        if (apiSource.getId() == null) {
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(ApiSourceSqlQueries.SQL_INSERT)) {
 
-                stmt.setString(1, source.getName());
+                stmt.setString(1, apiSource.getName());
                 try (ResultSet rs = stmt.executeQuery()) {
                     if (rs.next()) {
-                        source.setId(rs.getLong(1));
+                        apiSource.setId(rs.getLong(1));
                     }
                 }
             } catch (SQLException e) {
@@ -90,16 +90,18 @@ public class JdbcApiSourceRepository implements ApiSourceRepository {
             try (Connection conn = dataSource.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(ApiSourceSqlQueries.SQL_UPDATE)) {
 
-                stmt.setString(1, source.getName());
-                stmt.setLong(2, source.getId());
+                stmt.setString(1, apiSource.getName());
+                stmt.setLong(2, apiSource.getId());
 
                 stmt.executeUpdate();
             } catch (SQLException e) {
                 throw new DataAccessException("Error updating ApiSource", e);
             }
         }
-        return source;
+
+        return apiSource;
     }
+
 
     public static ApiSource mapRowToApiSource(ResultSet rs) throws SQLException {
         ApiSource apiSource = new ApiSource();

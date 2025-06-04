@@ -14,8 +14,6 @@ public interface WatchlistItemRepository {
 
     WatchlistItem save(WatchlistItem item);
 
-    void update(WatchlistItem item);
-
     void delete(long id);
 
 }

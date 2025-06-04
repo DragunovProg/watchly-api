@@ -80,42 +80,42 @@ public class JdbcWatchlistItemRepository implements WatchlistItemRepository {
 
     @Override
     public WatchlistItem save(WatchlistItem item) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(WatchlistItemSqlQueries.SQL_INSERT)) {
+        if (item.getId() == null) {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(WatchlistItemSqlQueries.SQL_INSERT)) {
 
-            stmt.setString(1, item.getStatus().name());
-            stmt.setLong(2, item.getUserId());
-            stmt.setLong(3, item.getMediaItemId());
-            stmt.setByte(4, item.getRating());
+                stmt.setString(1, item.getStatus().name());
+                stmt.setLong(2, item.getUserId());
+                stmt.setLong(3, item.getMediaItemId());
+                stmt.setByte(4, item.getRating());
 
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    item.setId(rs.getLong(WatchlistItemSqlQueries.COLUMN_ID));
-                    item.setAddedAt(rs.getTimestamp(WatchlistItemSqlQueries.COLUMN_ADDED_AT).toInstant().atZone(ZoneId.systemDefault()));
+                try (ResultSet rs = stmt.executeQuery()) {
+                    if (rs.next()) {
+                        item.setId(rs.getLong(WatchlistItemSqlQueries.COLUMN_ID));
+                        item.setAddedAt(rs.getTimestamp(WatchlistItemSqlQueries.COLUMN_ADDED_AT).toInstant().atZone(ZoneId.systemDefault()));
+                    }
                 }
+
+            } catch (SQLException e) {
+                throw new DataAccessException("Error saving watchlist item", e);
             }
+        } else {
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(WatchlistItemSqlQueries.SQL_UPDATE)) {
 
-        } catch (SQLException e) {
-            throw new DataAccessException("Error saving watchlist item", e);
+                stmt.setString(1, item.getStatus().name());
+                stmt.setLong(2, item.getUserId());
+                stmt.setLong(3, item.getMediaItemId());
+                stmt.setByte(4, item.getRating());
+                stmt.setLong(5, item.getId());
+                stmt.executeUpdate();
+
+            } catch (SQLException e) {
+                throw new DataAccessException("Error updating watchlist item with id: " + item.getId(), e);
+            }
         }
+
         return item;
-    }
-
-    @Override
-    public void update(WatchlistItem item) {
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(WatchlistItemSqlQueries.SQL_UPDATE)) {
-
-            stmt.setString(1, item.getStatus().name());
-            stmt.setLong(2, item.getUserId());
-            stmt.setLong(3, item.getMediaItemId());
-            stmt.setByte(4, item.getRating());
-            stmt.setLong(5, item.getId());
-            stmt.executeUpdate();
-
-        } catch (SQLException e) {
-            throw new DataAccessException("Error updating watchlist item with id: " + item.getId(), e);
-        }
     }
 
     @Override

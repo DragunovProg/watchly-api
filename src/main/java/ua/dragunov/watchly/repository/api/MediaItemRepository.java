@@ -12,7 +12,6 @@ public interface MediaItemRepository {
 
     MediaItem save(MediaItem mediaItem);
 
-    void update(MediaItem mediaItem);
 
     void delete(long id);
 
