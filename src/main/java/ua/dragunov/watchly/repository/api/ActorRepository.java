@@ -16,9 +16,4 @@ public interface ActorRepository {
 
     List<Actor> findByMediaItemId(long mediaItemId);
 
-
-
-
-
-
 }

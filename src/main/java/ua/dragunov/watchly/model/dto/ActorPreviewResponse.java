@@ -1,12 +1,8 @@
 package ua.dragunov.watchly.model.dto;
 
-import java.time.LocalDate;
-
-public record ActorResponse(
+public record ActorPreviewResponse(
         Long id,
         String firstName,
         String lastName,
-        LocalDate birthday,
-        String biography,
         String photoUrl
 ) {}

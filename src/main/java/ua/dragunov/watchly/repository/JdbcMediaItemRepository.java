@@ -104,9 +104,9 @@ public class JdbcMediaItemRepository implements MediaItemRepository {
     private void fillStatementProperties(MediaItem item, PreparedStatement stmt) throws SQLException {
         stmt.setString(1, item.getTitle());
         stmt.setString(2, item.getDescription());
-        stmt.setString(3, item.getReleaseYear());
+        stmt.setInt(3, item.getReleaseYear());
         stmt.setString(4, item.getPictureUrl());
-        stmt.setString(5, item.getExternal_id());
+        stmt.setString(5, item.getExternalId());
         stmt.setLong(6, item.getApiSourceId());
     }
 
@@ -115,9 +115,9 @@ public class JdbcMediaItemRepository implements MediaItemRepository {
         mediaItem.setId(rs.getLong("id"));
         mediaItem.setTitle(rs.getString("title"));
         mediaItem.setDescription(rs.getString("description"));
-        mediaItem.setReleaseYear(rs.getString("release_year"));
+        mediaItem.setReleaseYear(rs.getInt("release_year"));
         mediaItem.setPictureUrl(rs.getString("picture_url"));
-        mediaItem.setExternal_id(rs.getString("external_id"));
+        mediaItem.setExternalId(rs.getString("external_id"));
 
         Timestamp createdAtTimestamp = rs.getTimestamp("created_at");
         if (createdAtTimestamp != null) {

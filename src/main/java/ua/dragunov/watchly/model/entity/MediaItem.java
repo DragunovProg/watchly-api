@@ -1,16 +1,15 @@
 package ua.dragunov.watchly.model.entity;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Objects;
 
 public class MediaItem {
     private Long id;
     private String title;
     private String description;
-    private String releaseYear;
+    private int releaseYear;
     private String pictureUrl;
-    private String external_id;
+    private String externalId;
     private ZonedDateTime createdAt;
     private long apiSourceId;
 
@@ -39,20 +38,20 @@ public class MediaItem {
         this.description = description;
     }
 
-    public String getReleaseYear() {
+    public int getReleaseYear() {
         return releaseYear;
     }
 
-    public void setReleaseYear(String releaseYear) {
+    public void setReleaseYear(int releaseYear) {
         this.releaseYear = releaseYear;
     }
 
-    public String getExternal_id() {
-        return external_id;
+    public String getExternalId() {
+        return externalId;
     }
 
-    public void setExternal_id(String external_id) {
-        this.external_id = external_id;
+    public void setExternalId(String externalId) {
+        this.externalId = externalId;
     }
 
     public ZonedDateTime getCreatedAt() {
